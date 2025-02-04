@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Прогресс жизни</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: #1a1a1a;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #FFD700;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            background: #2a2a2a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 1rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: #FFD700;
+            color: #0a0a0a;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+            margin-bottom: 2rem;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #FFA500;
+        }
+
+        .visualization {
+            margin: 1.5rem 0;
+            display: none;
+        }
+
+        .grid-title {
+            color: #888;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 12px);
+            gap: 2px;
+            margin-bottom: 2rem;
+        }
+
+        .square {
+            width: 12px;
+            height: 12px;
+            background: #2a2a2a;
+            border-radius: 2px;
+            transition: background 0.3s;
+        }
+
+        .square.lived {
+            background: #FFD700;
+        }
+
+        .stats {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .stat-box {
+            background: #2a2a2a;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #FFD700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .quote {
+            display: none;
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #2a2a2a;
+            border-left: 4px solid #FFD700;
+            border-radius: 4px;
+            font-style: italic;
+            text-align: center;
+        }
+
+        .show {
+            display: block;
+        }
+
+        .show-flex {
+            display: flex;
+        }
+
+        .show-grid {
+            display: grid;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ПРОГРЕСС ЖИЗНИ ❤️</h1>
+        
+        <div class="input-group">
+            <label>Дата рождения</label>
+            <input type="date" id="birthdate">
+        </div>
+
+        <div class="input-group">
+            <label>Ожидаемая продолжительность жизни (лет)</label>
+            <input type="number" id="lifeExpectancy" value="80" min="1">
+        </div>
+
+        <button onclick="calculateProgress()">Рассчитать</button>
+
+        <div class="visualization">
+            <div class="grid-title">Прожитые месяцы (<span id="monthsLived">0</span> из <span id="totalMonths">0</span>)</div>
+            <div class="grid-container" id="monthsGrid"></div>
+
+            <div class="grid-title">Прожитые недели (<span id="weeksLived">0</span> из <span id="totalWeeks">0</span>)</div>
+            <div class="grid-container" id="weeksGrid"></div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-value" id="remainingMonths">0</div>
+                <div class="stat-label">Осталось месяцев</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="remainingWeeks">0</div>
+                <div class="stat-label">Осталось недель</div>
+            </div>
+        </div>
+
+        <div class="quote"></div>
+    </div>
+
+    <script>
+        const quotes = [
+            "Время - самая драгоценная валюта жизни. Не трать его впустую.",
+            "Жизнь измеряется не количеством вдохов, а количеством моментов, от которых захватывает дух.",
+            "Каждый момент - это возможность начать всё сначала.",
+            "Самое большое сожаление возникает от того, что мы не решаемся жить так, как хочет наше сердце.",
+            "Жизнь слишком коротка, чтобы тратить её на ненависть и злобу.",
+            "Ваше время ограничено, не тратьте его, живя чужой жизнью."
+        ];
+
+        function calculateProgress() {
+            const birthdate = new Date(document.getElementById('birthdate').value);
+            const lifeExpectancy = parseInt(document.getElementById('lifeExpectancy').value);
+            
+            if (!birthdate.getTime()) {
+                alert('Укажите дату рождения');
+                return;
+            }
+
+            const now = new Date();
+            const totalMonths = lifeExpectancy * 12;
+            const totalWeeks = lifeExpectancy * 52;
+
+            // Расчет прожитого времени
+            const livedYears = now.getFullYear() - birthdate.getFullYear();
+            const livedMonths = (livedYears * 12) + now.getMonth() - birthdate.getMonth();
+            const livedWeeks = Math.floor((now - birthdate) / (1000 * 60 * 60 * 24 * 7));
+
+            // Очистка предыдущих данных
+            const monthsGrid = document.getElementById('monthsGrid');
+            const weeksGrid = document.getElementById('weeksGrid');
+            monthsGrid.innerHTML = '';
+            weeksGrid.innerHTML = '';
+
+            // Генерация квадратов
+            for (let i = 0; i < totalMonths; i++) {
+                const square = document.createElement('div');
+                square.className = `square${i < livedMonths ? ' lived' : ''}`;
+                monthsGrid.appendChild(square);
+            }
+
+            for (let i = 0; i < totalWeeks; i++) {
+                const square = document.createElement('div');
+                square.className = `square${i < livedWeeks ? ' lived' : ''}`;
+                weeksGrid.appendChild(square);
+            }
+
+            // Обновление статистики
+            document.getElementById('monthsLived').textContent = livedMonths;
+            document.getElementById('totalMonths').textContent = totalMonths;
+            document.getElementById('weeksLived').textContent = livedWeeks;
+            document.getElementById('totalWeeks').textContent = totalWeeks;
+            document.getElementById('remainingMonths').textContent = totalMonths - livedMonths;
+            document.getElementById('remainingWeeks').textContent = totalWeeks - livedWeeks;
+
+            // Показываем скрытые элементы
+            document.querySelector('.visualization').classList.add('show');
+            document.querySelector('.stats').classList.add('show-grid');
+            
+            // Добавляем случайную цитату
+            const quoteElement = document.querySelector('.quote');
+            quoteElement.textContent = quotes[Math.floor(Math.random() * quotes.length)];
+            quoteElement.classList.add('show');
+        }
+    </script>
+</body>
+</html>
